@@ -1,11 +1,10 @@
 """
 Debug Toolbar middleware
 """
-import os
-
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
+from django.template import Context, Template
 from django.utils.encoding import smart_unicode
 from django.conf.urls.defaults import include, patterns
 
@@ -58,7 +57,7 @@ class DebugToolbarMiddleware(object):
         else:
             remote_addr = request.META.get('REMOTE_ADDR', None)
         if not remote_addr in settings.INTERNAL_IPS \
-            or (request.is_ajax() and \
+            or (request.is_ajax() and not request.GET.get('__debug_panel') and \
                 not debug_toolbar.urls._PREFIX in request.path) \
                     or not settings.DEBUG:
             return False
@@ -95,8 +94,16 @@ class DebugToolbarMiddleware(object):
                         {'redirect_to': redirect_to}
                     )
         if response.status_code == 200:
-            for panel in self.debug_toolbars[request].panels:
-                panel.process_response(request, response)
+            ajax_load_panel = request.GET.get('__debug_panel')
+            if ajax_load_panel:
+                response.content = ""
+                for panel in self.debug_toolbars[request].panels:
+                    if panel.dom_id() == ajax_load_panel:
+                        panel.process_response(request, response)
+                        response.content = Template('{{ panel.content|safe }}').render(Context({'panel': panel }))
+            else:
+                for panel in self.debug_toolbars[request].panels:
+                    panel.process_response(request, response)
             if response['Content-Type'].split(';')[0] in _HTML_TYPES:
                 response.content = replace_insensitive(
                     smart_unicode(response.content), 

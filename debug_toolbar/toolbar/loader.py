@@ -17,6 +17,7 @@ class DebugToolbar(object):
         # Check if settings has a DEBUG_TOOLBAR_CONFIG and updated config
         self.config.update(getattr(settings, 'DEBUG_TOOLBAR_CONFIG', {}))
         self.template_context = {
+            'request': request,
             'BASE_URL': base_url, # for backwards compatibility
             'DEBUG_TOOLBAR_MEDIA_URL': self.config.get('MEDIA_URL'),
         }
@@ -32,6 +33,7 @@ class DebugToolbar(object):
             #'debug_toolbar.panels.cache.CacheDebugPanel',
             'debug_toolbar.panels.signals.SignalDebugPanel',
             'debug_toolbar.panels.logger.LoggingPanel',
+            'debug_toolbar.panels.profiling.ProfilingPanel',
         )
         self.load_panels()
 

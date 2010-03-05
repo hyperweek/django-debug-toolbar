@@ -136,6 +136,8 @@ class SQLDebugPanel(DebugPanel):
     """
     name = 'SQL'
     has_content = True
+    has_tiny_content = True
+    _stats_initialized = False
 
     def __init__(self, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
@@ -146,9 +148,14 @@ class SQLDebugPanel(DebugPanel):
     def nav_title(self):
         return _('SQL')
 
+    def init_stats(self):
+        if not self._stats_initialized:
+            self._stats_initialized = True
+            self._queries = connection.queries[self._offset:]
+            self._sql_time = sum([q['duration'] for q in self._queries])
+
     def nav_subtitle(self):
-        self._queries = connection.queries[self._offset:]
-        self._sql_time = sum([q['duration'] for q in self._queries])
+        self.init_stats()
         num_queries = len(self._queries)
         # TODO l10n: use ngettext
         return "%d %s in %.2fms" % (
@@ -163,7 +170,16 @@ class SQLDebugPanel(DebugPanel):
     def url(self):
         return ''
 
+    def tiny_content(self):
+        self.init_stats()
+        num_queries = len(self._queries)
+        return "%d %s" % (
+            num_queries,
+            (num_queries == 1) and 'q' or 'qs',
+        )
+
     def content(self):
+        self.init_stats()
         width_ratio_tally = 0
         for query in self._queries:
             query['sql'] = reformat_sql(query['sql'])

@@ -16,7 +16,7 @@ var DEBUG_TOOLBAR_MEDIA_URL = "{{ DEBUG_TOOLBAR_MEDIA_URL }}";
 			{% for panel in panels %}
 				<li>
 					{% if panel.has_content %}
-						<a href="{{ panel.url|default:"#" }}" title="{{ panel.title }}" class="{{ panel.dom_id }}">
+					<a href="{{ panel.url|default:"#" }}" title="{{ panel.title }}" class="{{ panel.dom_id }}" {% if not panel.url %}onclick="if ($('#{{ panel.dom_id }}>.djDebugPanelContent').html()=='') {$.ajax({url:$.ajax_link('{{ request.path }}'), data: {__debug_panel:'{{ panel.dom_id }}'}, success: function(j){$('#{{ panel.dom_id }} .djDebugPanelContent').html(j);}});{% endif %}}">
 					{% else %}
 					    <div class="contentless">
 					{% endif %}
@@ -34,22 +34,16 @@ var DEBUG_TOOLBAR_MEDIA_URL = "{{ DEBUG_TOOLBAR_MEDIA_URL }}";
 		</ul>
 	</div>
 	<div style="display:none;" id="djDebugToolbarHandle">
-		<a title="{% trans "Show Toolbar" %}" id="djShowToolBarButton" href="#">&laquo;</a>
+		<a title="{% trans "Debug Toolbar" %}" id="djShowToolBarButton" href="#">&laquo; {% trans "Debug Toolbar" %}
+	{% for panel in panels %}
+	{% if panel.has_tiny_content %}
+	({{ panel.tiny_content|safe }}) 
+	{% endif %}
+	{% endfor %}
+		</a>
 	</div>
 	{% for panel in panels %}
-		{% if panel.has_content %}
-			<div id="{{ panel.dom_id }}" class="panelContent">
-				<div class="djDebugPanelTitle">
-					<a href="" class="djDebugClose">{% trans "Close" %}</a>
-					<h3>{{ panel.title|safe }}</h3>
-				</div>
-				<div class="djDebugPanelContent">
-				    <div class="scroll">
-				        {{ panel.content|safe }}
-				    </div>
-				</div>
-			</div>
-		{% endif %}
+	{% include "debug_toolbar/_panel.html" %}
 	{% endfor %}
 	<div id="djDebugWindow" class="panelContent"></div>
 </div>

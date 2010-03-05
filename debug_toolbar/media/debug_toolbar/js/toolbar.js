@@ -16,6 +16,20 @@
 })(window, document, "1.3", function($, jquery_loaded) {
 
 	$.cookie = function(name, value, options) { if (typeof value != 'undefined') { options = options || {}; if (value === null) { value = ''; options.expires = -1; } var expires = ''; if (options.expires && (typeof options.expires == 'number' || options.expires.toUTCString)) { var date; if (typeof options.expires == 'number') { date = new Date(); date.setTime(date.getTime() + (options.expires * 24 * 60 * 60 * 1000)); } else { date = options.expires; } expires = '; expires=' + date.toUTCString(); } var path = options.path ? '; path=' + (options.path) : ''; var domain = options.domain ? '; domain=' + (options.domain) : ''; var secure = options.secure ? '; secure' : ''; document.cookie = [name, '=', encodeURIComponent(value), expires, path, domain, secure].join(''); } else { var cookieValue = null; if (document.cookie && document.cookie != '') { var cookies = document.cookie.split(';'); for (var i = 0; i < cookies.length; i++) { var cookie = $.trim(cookies[i]); if (cookie.substring(0, name.length + 1) == (name + '=')) { cookieValue = decodeURIComponent(cookie.substring(name.length + 1)); break; } } } return cookieValue; } };
+	$.ajax_link = function (url) {
+		/**
+			Transform an URL for AJAX usage
+			It transforms /example/path?foo=bar into /example/path/ajax?foo=bar&rand=1234
+		*/
+		var urlParts = url.split('?');
+		var url = urlParts[0];
+		var d = new Date();
+		var time = d.getTime();
+		var arg = (urlParts.length > 1) ? '?'+urlParts[1]+'&' : '?';
+		arg += 'dtz='+time;
+		return url+arg;
+	}
+
 	$('head').append('<link rel="stylesheet" href="'+DEBUG_TOOLBAR_MEDIA_URL+'css/toolbar.min.css" type="text/css" />');
 	var COOKIE_NAME = 'djdt';
 	var djdt = {
@@ -42,7 +56,7 @@
 				$('#djDebugToolbar li').removeClass('active');
 				return false;
 			});
-			$('#djDebug a.remoteCall').click(function() {
+			$('#djDebug a.remoteCall').live("click", function() {
 				$('#djDebugWindow').load(this.href, {}, function() {
 					$('#djDebugWindow a.djDebugBack').click(function() {
 						$(this).parent().parent().hide();
@@ -52,12 +66,12 @@
 				$('#djDebugWindow').show();
 				return false;
 			});
-			$('#djDebugTemplatePanel a.djTemplateShowContext').click(function() {
+			$('#djDebugTemplatePanel a.djTemplateShowContext').live("click", function() {
 				djdt.toggle_arrow($(this).children('.toggleArrow'))
 				djdt.toggle_content($(this).parent().next());
 				return false;
 			});
-			$('#djDebugSQLPanel a.djSQLShowStacktrace').click(function() {
+			$('#djDebugSQLPanel a.djSQLShowStacktrace').live("click", function() {
 				djdt.toggle_content($('.djSQLHideStacktraceDiv', $(this).parents('tr')));
 				return false;
 			});
