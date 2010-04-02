@@ -13,6 +13,7 @@ from django.template import Node
 from django.template.loader import render_to_string
 from django.utils import simplejson
 from django.utils.encoding import force_unicode
+from django.utils.functional import memoize
 from django.utils.hashcompat import sha_constructor
 from django.utils.translation import ugettext_lazy as _
 
@@ -28,6 +29,11 @@ socketserver_path = os.path.realpath(os.path.dirname(SocketServer.__file__))
 SQL_WARNING_THRESHOLD = getattr(settings, 'DEBUG_TOOLBAR_CONFIG', {}) \
                             .get('SQL_WARNING_THRESHOLD', 500)
 
+def memoized_realpath(path):
+    return os.path.realpath(path)
+_realpath_cache = {}
+memoized_realpath = memoize(memoized_realpath, _realpath_cache, 1)
+
 def tidy_stacktrace(strace):
     """
     Clean up stacktrace and remove all entries that:
@@ -37,7 +43,7 @@ def tidy_stacktrace(strace):
     """
     trace = []
     for s in strace[:-1]:
-        s_path = os.path.realpath(s[0])
+        s_path = memoized_realpath(s[0])
         if getattr(settings, 'DEBUG_TOOLBAR_CONFIG', {}).get('HIDE_DJANGO_SQL', True) \
             and django_path in s_path and not 'django/contrib' in s_path:
             continue
