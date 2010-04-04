@@ -1,0 +1,27 @@
+{% if not source %}
+    <p>This doesn't seem to be HTML</p>
+{% else %}
+    {% if errors %}
+        <table>
+            <thead>
+                <tr>
+					<th>Errors</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for error in errors %}
+                    <tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
+                        <td>
+                            Line <a href="#validator-{{ error.line }}">{{ error.line }}</a>:
+                            {{ error.message|escape }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+		<br/>
+        {{ source }}
+    {% else %}
+        <p>This page contains valid markup or tidylib is not installed.</p>
+    {% endif %}
+{% endif %}

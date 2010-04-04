@@ -64,7 +64,7 @@ class DebugToolbar(object):
                 raise exceptions.ImproperlyConfigured, 'Toolbar Panel module "%s" does not define a "%s" class' % (panel_module, panel_classname)
 
             try:
-                panel_instance = panel_class(context=self.template_context)
+                panel_instance = panel_class()
             except:
                 raise # Bubble up problem loading panel
 

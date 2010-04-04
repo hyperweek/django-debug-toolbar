@@ -96,11 +96,12 @@ class DebugToolbarMiddleware(object):
         if response.status_code == 200:
             ajax_load_panel = request.GET.get('__debug_panel')
             if ajax_load_panel:
-                response.content = ""
+                content = ""
                 for panel in self.debug_toolbars[request].panels:
                     if panel.dom_id() == ajax_load_panel:
                         panel.process_response(request, response)
-                        response.content = Template('{{ panel.content|safe }}').render(Context({'panel': panel }))
+                        content = Template('{{ panel.content|safe }}').render(Context({'panel': panel }))
+                response.content = content
             else:
                 for panel in self.debug_toolbars[request].panels:
                     panel.process_response(request, response)
