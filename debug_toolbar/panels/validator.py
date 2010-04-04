@@ -15,6 +15,7 @@ content_type_re = re.compile(r'text\/html|application\/xhtml\+xml')
 
 class ValidatorPanel(DebugPanel):
     has_content = True
+    has_tiny_content = True
     name = 'Validator'
     
     def __init__(self):
@@ -32,20 +33,30 @@ class ValidatorPanel(DebugPanel):
 
     def url(self):
         return ''
-            
-    def process_response(self, request, response):
-        self.request = request
-        self.response = response
-        if not content_type_re.search(response['content-type']):
-            return 
-        self.source = response.content.decode('utf-8')
+
+    def init_stats(self):
+        self.source = self.response.content.decode('utf-8')
         if tidylib:
             document, errors = tidylib.tidy_document(self.source, options={'numeric-entities':1})
         else:
             errors = ""
         if errors:
             self.errors = [e.groupdict() for e in error_re.finditer(errors)]
+
+    def tiny_content(self):
+        self.init_stats()
+        if self.errors:
+            return "%s V" % len(self.errors)
+        return ""
         
+    def process_response(self, request, response):
+        self.request = request
+        self.response = response
+        if not content_type_re.search(self.response['content-type']):
+            return 
+        self.init_stats()
+            
+    def content(self):
         try:
             from pygments import highlight
             from pygments.lexers import HtmlLexer
@@ -61,8 +72,6 @@ class ValidatorPanel(DebugPanel):
             self.source = '<pre>%s</pre>' % escape(self.source)
             
         self.source = mark_safe(self.source)
-            
-    def content(self):
         context = { 'errors': self.errors, 'source': self.source }
         return render_to_string('debug_toolbar/panels/validator.html', context)
         

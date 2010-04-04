@@ -173,10 +173,7 @@ class SQLDebugPanel(DebugPanel):
     def tiny_content(self):
         self.init_stats()
         num_queries = len(self._queries)
-        return "%d %s" % (
-            num_queries,
-            (num_queries == 1) and 'q' or 'qs',
-        )
+        return "%d SQL" % num_queries
 
     def content(self):
         self.init_stats()
