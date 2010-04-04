@@ -42,3 +42,6 @@
 #djDebug .highlight,#djDebug .highlight .err,#djDebug .highlight .g,#djDebug .highlight .o,#djDebug .highlight .n,#djDebug .highlight .l,#djDebug .highlight .x,#djDebug .highlight .p{color:#000}
 #djDebug .highlight .k,#djDebug .highlight .mi,#djDebug .highlight .m,#djDebug .highlight .il,#djDebug .highlnt-weight:700}
 #djDebug .highlight .s,#djDebug .highlight .na,#djDebug .highlight .nv,#djDebug .highlight .s2,#djDebug .highlight .cp{color:#333}
+#djDebug .panelContent tbody .alternative {background-color: #FFFFCC;border-bottom: 1px solid #ccc;border-top: 1px solid #ccc;}
+#djDebug .panelContent tbody .alternative td {color: #333;}
+

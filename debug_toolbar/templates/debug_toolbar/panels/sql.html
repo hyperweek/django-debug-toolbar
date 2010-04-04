@@ -9,6 +9,10 @@
 		</tr>
 	</thead>
 	<tbody>
+          {% for database, queries in databases.iteritems %}
+                <tr class="alternative">
+                  <td colspan="4">Database: <b>{{ database }}</b></td>
+                </tr>
 		{% for query in queries %}
 			<tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
 				<td>{{ query.duration|floatformat:"2" }}</td>
@@ -65,5 +69,6 @@
 				</td>
 			</tr>
 		{% endfor %}
+          {% endfor %}
 	</tbody>
 </table>

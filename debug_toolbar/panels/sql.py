@@ -7,6 +7,10 @@ import traceback
 import django
 from django.conf import settings
 from django.db import connection
+try:
+    from django.db import connections
+except:
+    connections = None
 from django.db.backends import util
 from django.views.debug import linebreak_iter
 from django.template import Node
@@ -125,7 +129,7 @@ class DatabaseStatTracker(util.CursorDebugWrapper):
                 'duration': duration,
                 'raw_sql': sql,
                 'params': _params,
-                'hash': sha_constructor(settings.SECRET_KEY + sql + _params).hexdigest(),
+                'hash': sha_constructor("%s%s%s" % (settings.SECRET_KEY, sql.encode('utf-8') if type(sql) == unicode else sql, _params)).hexdigest(),
                 'stacktrace': stacktrace,
                 'start_time': start,
                 'stop_time': stop,
@@ -147,26 +151,33 @@ class SQLDebugPanel(DebugPanel):
 
     def __init__(self, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
-        self._offset = len(connection.queries)
+        if hasattr(settings, 'DATABASES'):
+            self._connections = connections
+        else:
+            self._connections = { 'default': connection }
+        self._offsets = dict((d, len(self._connections[d].queries)) for d in self._connections)
         self._sql_time = 0
-        self._queries = []
+        self._databases = {}
 
     def nav_title(self):
         return _('SQL')
 
     def init_stats(self):
         if not self._stats_initialized:
-            self._stats_initialized = True
-            self._queries = connection.queries[self._offset:]
-            self._sql_time = sum([q['duration'] for q in self._queries])
+            self._num_queries = 0
+            for db in self._connections:
+                queries = self._connections[db].queries[self._offsets[db]:]
+                self._sql_time += sum([q['duration'] for q in queries])
+                self._num_queries += len(queries)
+                self._databases[db] = queries
 
     def nav_subtitle(self):
         self.init_stats()
-        num_queries = len(self._queries)
+
         # TODO l10n: use ngettext
         return "%d %s in %.2fms" % (
-            num_queries,
-            (num_queries == 1) and 'query' or 'queries',
+            self._num_queries,
+            (self._num_queries == 1) and 'query' or 'queries',
             self._sql_time
         )
 
@@ -178,24 +189,24 @@ class SQLDebugPanel(DebugPanel):
 
     def tiny_content(self):
         self.init_stats()
-        num_queries = len(self._queries)
-        return "%d SQL" % num_queries
+        return "%d SQL" % self._num_queries
 
     def content(self):
         self.init_stats()
         width_ratio_tally = 0
-        for query in self._queries:
-            query['sql'] = reformat_sql(query['sql'])
-            try:
-                query['width_ratio'] = (query['duration'] / self._sql_time) * 100
-            except ZeroDivisionError:
-                query['width_ratio'] = 0
-            query['start_offset'] = width_ratio_tally
-            width_ratio_tally += query['width_ratio']
+        for queries in self._databases.values():
+            for query in queries:
+                query['sql'] = reformat_sql(query['sql'])
+                try:
+                    query['width_ratio'] = (query['duration'] / self._sql_time) * 100
+                except ZeroDivisionError:
+                    query['width_ratio'] = 0
+                query['start_offset'] = width_ratio_tally
+                width_ratio_tally += query['width_ratio']
 
         context = self.context.copy()
         context.update({
-            'queries': self._queries,
+            'databases': self._databases,
             'sql_time': self._sql_time,
             'is_mysql': settings.DATABASE_ENGINE == 'mysql',
         })
